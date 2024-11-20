@@ -16,8 +16,8 @@ export class ProductService {
     return this.http.get<Product[]>(`${this.baseUrl}`);
   }
 
-  public getProductById(id:number):Observable<Product[]>{
-    return this.http.get<Product[]>(`${this.baseUrl}/${id}`);
+  public getProductById(id:number):Observable<Product>{
+    return this.http.get<Product>(`${this.baseUrl}/${id}`);
   }
 
   public deleteProductById(id:number):Observable<String>{
@@ -29,7 +29,11 @@ export class ProductService {
   }
 
   public updateProduct(id:number,product:Product):Observable<Product>{
-    return this.http.post<Product>(`${this.baseUrl}/${id}`,product);
+    return this.http.put<Product>(`${this.baseUrl}/${id}`,product);
+  }
+
+  public filterProductsByCategory(category:String):Observable<Product[]>{
+    return this.http.get<Product[]>(`${this.baseUrl}/filter-products?category=${category}`);
   }
 
 

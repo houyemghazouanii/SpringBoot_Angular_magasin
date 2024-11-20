@@ -1,54 +1,69 @@
 package com.isikef.magasin.controller;
 
+import com.isikef.magasin.entities.Category;
 import com.isikef.magasin.entities.Product;
-import com.isikef.magasin.repository.ProductRepository;
+import com.isikef.magasin.services.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/products")
+@CrossOrigin(origins = "*")
 public class ProductController {
 
     @Autowired
-    private ProductRepository productRepository;
+    private ProductService productService;
 
     @GetMapping
-    public List<Product> getProducts() {
-        return productRepository.findAll();
+    public ResponseEntity<List<Product>> getProducts() {
+        List<Product> products = productService.getAllProducts();
+        return ResponseEntity.ok(products);
     }
 
     @PostMapping
-    public Product addProduct(@RequestBody  Product product) {
-        return productRepository.save(product);
+    public ResponseEntity<Product> addProduct(@RequestBody Product product) {
+        Product createdProduct = productService.createProduct(product);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdProduct);
     }
 
     @GetMapping("/{id}")
-    public Product getProduct(@PathVariable Long id) {
-        return productRepository.findById(id).get();
+    public ResponseEntity<Product> getProduct(@PathVariable Long id) {
+        Optional<Product> product = Optional.ofNullable(productService.getProductById(id));
+        return product.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity deleteProduct(@PathVariable Long id) {
-        productRepository.deleteById(id);
+    public ResponseEntity<Map<String,String>> deleteProduct(@PathVariable Long id) {
+        productService.deleteProduct(id);
+           Map<String,String> res = new HashMap<>();
+           res.put("message", "Product with id" +id +"has been deleted");
 
-        return ResponseEntity.ok().
-                body("Product with id " + id + " has been deleted.");
-
+        return ResponseEntity.ok().body(res);
     }
 
     @PutMapping("/{id}")
-    public Product updateProduct(@PathVariable Long id, @RequestBody Product product) {
-        Product current = productRepository.findById(id).get();
-        current.setCategory(product.getCategory());
-        current.setName(product.getName());
-        current.setDescription(product.getDescription());
-        current.setPrice(product.getPrice());
-        current.setNumber(product.getNumber());
-        current.setQte(product.getQte());
+    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody Product product) {
+        Optional<Product> existingProduct = Optional.ofNullable(productService.getProductById(id));
 
-        return productRepository.save(current);
+        if (existingProduct.isPresent()) {
+            Product updatedProduct = productService.updateProduct(id, product);
+            return ResponseEntity.ok(updatedProduct);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
     }
+
+    @GetMapping("filter-products")
+    public List<Product> filtreProducts(@RequestParam("category")Category category){
+        return productService.filterProductsByCategory(category);
+    }
+
 }

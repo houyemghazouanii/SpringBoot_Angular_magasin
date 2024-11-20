@@ -22,4 +22,6 @@ public class Product {
     float price;
     int number;
     int qte;
+
+
 }
